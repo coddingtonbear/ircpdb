@@ -1,7 +1,25 @@
 #!/usr/bin/python
-
 import os
-from distutils.core import setup
+from setuptools import setup, find_packages
+
+
+requirements_path = os.path.join(
+    os.path.dirname(__file__),
+    'requirements.txt',
+)
+try:
+    from pip.req import parse_requirements
+    requirements = [
+        str(req.req) for req in parse_requirements(requirements_path)
+    ]
+except ImportError:
+    requirements = []
+    with open(requirements_path, 'r') as in_:
+        requirements = [
+            req for req in in_.readlines()
+            if not req.startswith('-')
+            and not req.startswith('#')
+        ]
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -19,7 +37,7 @@ setup(
     author="Adam Coddington",
     author_email="me@adamcoddington.net",
     url="http://github.com/coddingtonbear/ircpdb",
-    packages=["ircpdb"],
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

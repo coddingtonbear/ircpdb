@@ -18,7 +18,7 @@ channel so you can collaboratively debug an application remotely.
     )
 
 By default, ircpdb will create the channel you specify on Freenode
-and randomly select a username for itself, but you can feel free to
+and randomly select a nickname for itself, but you can feel free to
 configure ircpdb to connect anywhere:
 
 .. code-block::
@@ -26,7 +26,7 @@ configure ircpdb to connect anywhere:
     import ircpdb
     ircpdb.set_trace(
         channel="#debugger_hangout",
-        username='im_a_debugger',
+        nickname='im_a_debugger',
         server='irc.mycompany.org',
         port=6667
     )
