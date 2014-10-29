@@ -1,51 +1,51 @@
-rpdb - remote debugger based on pdb
-===================================
+ircpdb - Remotely debug your Python application from an IRC channel
+===================================================================
 
-rpbm is a wrapper around pdb that re-routes stdin and stdout to a socket
-handler. By default it opens the debugger on port 4444::
+.. warning::
 
-    import rpdb; rpdb.set_trace()
+   This library is a work in progress and is, as of yet, non-functional.
+   Give me a few days.
 
-But you can change that by simply instantiating Rpdb manually::
+ircpdb is an adaptation of rpdb that, instead of opening a port and
+allowing you to debug over telnet, connects to a configurable IRC
+channel so you can collaboratively debug an application remotely.
 
-    import rpdb
-    debugger = rpdb.Rpdb(port=12345)
-    debugger.set_trace()
+.. code-block::
 
-It is known to work on Jython 2.5 to 2.7, Python 2.5 to 3.1. It was written
-originally for Jython since this is pretty much the only way to debug it when
-running it on Tomcat.
+    import ircpdb
+    ircpdb.set_trace(
+        channel="#debugger_hangout",
+    )
+
+By default, ircpdb will create the channel you specify on Freenode
+and randomly select a username for itself, but you can feel free to
+configure ircpdb to connect anywhere:
+
+.. code-block::
+
+    import ircpdb
+    ircpdb.set_trace(
+        channel="#debugger_hangout",
+        username='im_a_debugger',
+        server='irc.mycompany.org',
+        port=6667
+    )
 
 Upon reaching `set_trace()`, your script will "hang" and the only way to get it
-to continue is to access rpdb using telnet, netcat, etc..::
-
-    nc 127.0.0.1 4444
+to continue is to access ircpdb by talking to the user that connected to the
+above IRC channel.
 
 Installation in CPython (standard Python)
 -----------------------------------------
 
-    pip install rpdb
-
-For a quick, ad hoc alternative, you can copy the entire rpdb subdirectory
-(the directory directly containing the __init__.py file) to somewhere on your
-$PYTHONPATH.
-
-Installation in a Tomcat webapp
--------------------------------
-
-Just copy the rpdb directory (the one with the __init__.py file) in your
-WEB-INF/lib/Lib folder along with the standard Jython library (required).
-
-Known bugs
-----------
-  - The socket is not always closed properly so you will need to ^C in netcat
-    and Esc+q in telnet to exit after a continue or quit.
-  - There is a bug in Jython 2.5/pdb that causes rpdb to stop on ghost
-    breakpoints after you continue ('c'), this is fixed in 2.7b1.
+    pip install ircpdb
 
 Author(s)
 ---------
-Bertrand Janin <b@janin.com> - http://tamentis.com/
+Adam Coddington <me@adamcoddington.net> - http://adamcoddington.net/
+
+This library is a fork of rpdb, and the underpinnings of this library
+are owed to Bertrand Janin <b@janin.com> - http://tamentis.com/.
 
 With contributions from (chronological, latest first):
 

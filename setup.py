@@ -12,17 +12,16 @@ except IOError:
     README = CHANGES = ''
 
 setup(
-    name="rpdb",
-    version="0.1.6",
-    description="pdb wrapper with remote access via tcp socket",
+    name="ircpdb",
+    version="0.1",
+    description="Remotely debug your Python application via IRC.",
     long_description=README + "\n\n" + CHANGES,
-    author="Bertrand Janin",
-    author_email="b@janin.com",
-    url="http://tamentis.com/projects/rpdb",
-    packages=["rpdb"],
+    author="Adam Coddington",
+    author_email="me@adamcoddington.net",
+    url="http://github.com/coddingtonbear/ircpdb",
+    packages=["ircpdb"],
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: ISC License (ISCL)",
         "Operating System :: MacOS :: MacOS X",
