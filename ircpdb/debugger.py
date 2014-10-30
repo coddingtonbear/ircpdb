@@ -1,3 +1,4 @@
+import logging
 import os
 import pdb
 import socket
@@ -10,6 +11,9 @@ from irc.connection import Factory
 
 from .exceptions import NoChannelSelected
 from .bot import IrcpdbBot
+
+
+logger = logging.getLogger(__name__)
 
 
 class Ircpdb(pdb.Pdb):
@@ -39,12 +43,11 @@ class Ircpdb(pdb.Pdb):
 
         # Writes to stdout are forbidden in mod_wsgi environments
         try:
-            sys.stderr.write(
-                "ircpdb has connected to %s:%s on %s\n" % (
-                    server,
-                    port,
-                    channel
-                )
+            logger.info(
+                "ircpdb has connected to %s:%s on %s\n",
+                server,
+                port,
+                channel
             )
         except IOError:
             pass
@@ -65,10 +68,6 @@ class Ircpdb(pdb.Pdb):
             stdout=self.p_B_pipe,
         )
 
-        print self.stdin
-        print self.stdout
-        #sys.stdout = sys.stdin = self.handle
-
         self.bot = IrcpdbBot(
             channel=channel,
             nickname=nickname,
@@ -78,13 +77,14 @@ class Ircpdb(pdb.Pdb):
             **connect_params
         )
 
-    def start_bot(self):
-        self.bot.start()
-
     def shutdown(self):
         """Revert stdin and stdout, close the socket."""
         sys.stdout = self.old_stdout
         sys.stdin = self.old_stdin
+        self.p_A_pipe.close()
+        self.p_B_pipe.close()
+        self.b_A_pipe.close()
+        self.b_B_pipe.close()
         self.bot.disconnect()
 
     def do_continue(self, arg):

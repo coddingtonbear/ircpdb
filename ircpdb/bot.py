@@ -1,10 +1,14 @@
 import fcntl
+import logging
 from multiprocessing import Queue
 import os
 import random
 
 from irc import strings
 from irc.bot import SingleServerIRCBot, ServerSpec
+
+
+logger = logging.getLogger(__name__)
 
 
 class IrcpdbBot(SingleServerIRCBot):
@@ -23,6 +27,7 @@ class IrcpdbBot(SingleServerIRCBot):
         c.nick(c.get_nickname() + "-" + random.randrange(0, 9999))
 
     def on_welcome(self, c, e):
+        logger.debug('Received welcome message, joining %s', self.channel)
         c.join(self.channel)
 
     def on_privmsg(self, c, e):
@@ -40,6 +45,7 @@ class IrcpdbBot(SingleServerIRCBot):
         return
 
     def do_command(self, e, cmd):
+        logger.debug('Received command: %s', cmd)
         if cmd == "disconnect":
             self.disconnect()
         elif cmd == "die":
@@ -58,7 +64,7 @@ class IrcpdbBot(SingleServerIRCBot):
                 messages = None
             if messages:
                 for message in messages.split('\n'):
-                    print ">> %s" % message.strip()
+                    logger.debug('>> %s', message)
                     self.connection.send_raw(
                         'PRIVMSG %s :%s' % (
                             self.channel,
@@ -72,5 +78,6 @@ class IrcpdbBot(SingleServerIRCBot):
                 if self.queue.empty():
                     break
                 message = self.queue.get(block=False)
-                print "<< %s" % message.strip()
-                outhandle.write(u'%s\r\n' % message)
+                logger.debug('<< %s', message)
+                outhandle.write(u'%s\n' % message)
+                outhandle.flush()
