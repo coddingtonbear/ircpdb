@@ -106,14 +106,23 @@ class IrcpdbBot(SingleServerIRCBot):
             )
             return
         if message_stripped:
-            self.connection.send_raw(
-                'PRIVMSG %s :%s' % (
-                    username,
-                    message_stripped
+            chunk_size = 500
+            if len(message_stripped) > 512:
+                message_parts = [
+                    message_stripped[i:i+chunk_size]
+                    for i in range(0, len(message_stripped), chunk_size)
+                ]
+            else:
+                message_parts = [message_stripped]
+            for part in message_parts:
+                self.connection.send_raw(
+                    'PRIVMSG %s :%s' % (
+                        username,
+                        message_stripped
+                    )
                 )
-            )
-            if self.message_wait_seconds:
-                time.sleep(self.message_wait_seconds)
+                if self.message_wait_seconds:
+                    time.sleep(self.message_wait_seconds)
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()
