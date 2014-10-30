@@ -8,6 +8,7 @@ from threading import Thread
 import traceback
 
 from irc.connection import Factory
+import six
 
 from .exceptions import NoChannelSelected
 from .bot import IrcpdbBot
@@ -20,7 +21,8 @@ class Ircpdb(pdb.Pdb):
     def __init__(
         self, channel=None, nickname=None,
         server='chat.freenode.net', port=6667,
-        password=None, ssl=True
+        password=None, ssl=True,
+        limit_access_to=None
     ):
         """Initialize the socket and initialize pdb."""
 
@@ -28,6 +30,11 @@ class Ircpdb(pdb.Pdb):
         self.old_stdout = sys.stdout
         self.old_stdin = sys.stdin
         self.read_timeout = 0.1
+
+        if not limit_access_to:
+            limit_access_to = []
+        elif isinstance(limit_access_to, six.string_types):
+            limit_access_to = [limit_access_to]
 
         connect_params = {}
         if not nickname:
@@ -74,6 +81,7 @@ class Ircpdb(pdb.Pdb):
             server=server,
             port=port,
             password=password,
+            limit_access_to=limit_access_to,
             **connect_params
         )
 

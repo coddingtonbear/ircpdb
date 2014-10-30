@@ -23,26 +23,55 @@ configure ircpdb to connect anywhere:
         channel="#debugger_hangout",
         nickname='im_a_debugger',
         server='irc.mycompany.org',
-        port=6667
+        limit_access_to=['mynickname'],
+        port=6667,
+        ssl=True,
     )
 
 Upon reaching `set_trace()`, your script will "hang" and the only way to get it
 to continue is to access ircpdb by talking to the user that connected to the
 above IRC channel.
 
+By default, the debugger will enter the channel you've specified using a
+username starting with the hostname of the computer from which it was
+launched (in the following example: 'MyHostname').  To interact with
+the debugger, just send messages in the channel prefixed with "MyHostname:",
+or simply "!".
+
+For example, the following two commands are equivalent, and each will
+display the pdb help screen (be sure to replace 'MyHostname' with whatever
+username the bot selected)::
+
+    !help
+
+    MyHostname: help
+
 Installation in CPython (standard Python)
 -----------------------------------------
 
     pip install ircpdb
+
+Troubleshooting
+---------------
+
+If you do not see the bot entering your specified channel, try increasing
+the logging level by adding the following lines above your trace to gather
+a little more information about problems that may have occurred while 
+connecting to the IRC server:
+
+.. code-block::
+
+   import logging
+   logging.basicConfig(level=logging.DEBUG)
 
 Author(s)
 ---------
 Adam Coddington <me@adamcoddington.net> - http://adamcoddington.net/
 
 This library is a fork of rpdb, and the underpinnings of this library
-are owed to Bertrand Janin <b@janin.com> - http://tamentis.com/.
-
-With contributions from (chronological, latest first):
+are owed to Bertrand Janin <b@janin.com> - http://tamentis.com/ and
+all other contributors to `rpdb <https://github.com/tamentis/rpdb>`
+including the following:
 
  - Ken Manheimer - @kenmanheimer
  - Steven Willis - @onlynone
@@ -50,8 +79,3 @@ With contributions from (chronological, latest first):
  - Cyprien Le Pannérer <clepannerer@edd.fr>
  - k4ml <kamal.mustafa@gmail.com>
  - Sean M. Collins <sean@coreitpro.com>
-
-This is inspired by:
-
- - http://bugs.python.org/issue721464
- - http://snippets.dzone.com/posts/show/7248

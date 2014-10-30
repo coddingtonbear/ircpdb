@@ -14,10 +14,12 @@ logger = logging.getLogger(__name__)
 class IrcpdbBot(SingleServerIRCBot):
     def __init__(
         self, channel, nickname, server, port, password,
+        limit_access_to,
         **connect_params
     ):
         self.channel = channel
         self.queue = Queue()
+        self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
         super(IrcpdbBot, self).__init__(
             [server], nickname, nickname, **connect_params
@@ -31,9 +33,14 @@ class IrcpdbBot(SingleServerIRCBot):
         c.join(self.channel)
 
     def on_privmsg(self, c, e):
-        self.do_command(e, e.arguments[0])
+        self.send_user_message(
+            e.source.nick,
+            "Ircdb currently supports sending/receiving messages "
+            "using only the IRC channel."
+        )
 
     def on_pubmsg(self, c, e):
+        # Check if this message is prefixed with the bot's username:
         a = e.arguments[0].split(":", 1)
         if (
             len(a) > 1
@@ -42,16 +49,51 @@ class IrcpdbBot(SingleServerIRCBot):
             )
         ):
             self.do_command(e, a[1].strip())
+
+        # And, check if the argument was prefixed with a '!'.
+        if e.arguments[0][0] == '!':
+            self.do_command(e, e.arguments[0][1:].strip())
         return
 
     def do_command(self, e, cmd):
         logger.debug('Received command: %s', cmd)
-        if cmd == "disconnect":
-            self.disconnect()
-        elif cmd == "die":
-            self.die()
+        nickname = e.source.nick
+        if self.limit_access_to and nickname not in self.limit_access_to:
+            self.send_channel_message(
+                "I'm sorry, %s, you are not allowed to give commands "
+                "to this debugger.  Only the following users have "
+                "permission from one of the following users: %s." % (
+                    nickname,
+                    ', '.join(self.limit_access_to)
+                )
+            )
+            return
+
+        if cmd.startswith("!allow"):
+            allows = cmd.split(' ')
+            self.limit_access_to.extend(allows[1:])
+            self.send_channel_message(
+                "The following users have been granted access to the debugger:"
+                " %s." % (
+                    ', '.join(allows[1:])
+                )
+            )
         else:
             self.queue.put(cmd.strip())
+
+    def send_channel_message(self, message):
+        return self.send_user_message(
+            self.channel,
+            message,
+        )
+
+    def send_user_message(self, username, message):
+        self.connection.send_raw(
+            'PRIVMSG %s :%s' % (
+                username,
+                message.strip()
+            )
+        )
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()
@@ -65,12 +107,7 @@ class IrcpdbBot(SingleServerIRCBot):
             if messages:
                 for message in messages.split('\n'):
                     logger.debug('>> %s', message)
-                    self.connection.send_raw(
-                        'PRIVMSG %s :%s' % (
-                            self.channel,
-                            message.strip()
-                        )
-                    )
+                    self.send_channel_message(message.strip())
 
             self.manifold.process_once(timeout)
 
