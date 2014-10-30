@@ -31,13 +31,14 @@ except IOError:
 
 setup(
     name="ircpdb",
-    version="1.0.3",
+    version="1.0.4",
     description="Remotely debug your Python application via IRC.",
     long_description=README + "\n\n" + CHANGES,
     author="Adam Coddington",
     author_email="me@adamcoddington.net",
     url="http://github.com/coddingtonbear/ircpdb",
     packages=find_packages(),
+    install_requires=requirements,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
