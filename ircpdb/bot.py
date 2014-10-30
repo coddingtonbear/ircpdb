@@ -3,6 +3,8 @@ import logging
 from multiprocessing import Queue
 import os
 import random
+import socket
+import textwrap
 import time
 
 from irc import strings
@@ -47,6 +49,20 @@ class IrcpdbBot(SingleServerIRCBot):
         logger.debug('Received welcome message, joining %s', self.channel)
         c.join(self.channel)
         self.joined = True
+
+        hello_lines = [
+            "Debugger ready (on host %s)" % socket.gethostname(),
+            (
+                "Please prefix debugger commands with either '!' or '%s:'. "
+                "For pdb help, say '!help'; for a list of ircpdb-specific "
+                "commands, say '!!help'."
+            )
+        ]
+        for line in hello_lines:
+            self.send_user_message(
+                self.channel,
+                line
+            )
         for username, message in self.pre_join_queue:
             self.send_user_message(username, message)
 
@@ -96,16 +112,80 @@ class IrcpdbBot(SingleServerIRCBot):
                     ', '.join(allows[1:])
                 )
             )
+            return
+        if cmd.startswith("!set_dpaste_minimum_response_length"):
+            value = cmd.split(' ')
+            try:
+                self.dpaste_minimum_response_length = int(value[1])
+                self.send_channel_message(
+                    "Messages longer than %s lines will now be posted "
+                    "to dpaste if possible." % (
+                        self.dpaste_minimum_response_length
+                    )
+                )
+            except (TypeError, IndexError, ValueError):
+                self.send_channel_message(
+                    "An error was encountered while setting the "
+                    "dpaste_minimum_response_length setting. %s"
+                )
+            return
+        if cmd.startswith("!set_message_wait_seconds"):
+            value = cmd.split(' ')
+            try:
+                self.message_wait_seconds = float(value[1])
+                self.send_channel_message(
+                    "There will be a delay of %s seconds between "
+                    "sending each message." % (
+                        self.message_wait_seconds
+                    )
+                )
+            except (TypeError, IndexError, ValueError):
+                self.send_channel_message(
+                    "An error was encountered while setting the "
+                    "message_wait_seconds setting."
+                )
+            return
+        if cmd.startswith("!help"):
+            available_commands = textwrap.dedent("""
+                Available Commands:
+                * !!allow NICKNAME
+                  Add NICKNAME to the list of users that are allowed to
+                  interact with the debugger. Current value: {limit_access_to}.
+
+                * !!set_dpaste_minimum_response_length INTEGER
+                  Try to send messages this length or longer in lines
+                  to dpaste rather than sending them to IRC directly.
+                  Current value: {dpaste_minimum_response_length}.
+
+                * !!set_message_wait_seconds FLOAT
+                  Set the number of seconds to wait between sending messages
+                  (this is a measure used to prevent being kicked from
+                  Freenode and other IRC servers that enforce limits on the
+                  number of messages a client an send in a given period of
+                  time. Current value: {message_wait_seconds}.
+            """.format(
+                limit_access_to=self.limit_access_to,
+                dpaste_minimum_response_length=(
+                    self.dpaste_minimum_response_length
+                ),
+                message_wait_seconds=self.message_wait_seconds,
+            ))
+            self.send_channel_message(
+                available_commands,
+                dpaste=True,
+            )
+            return
         else:
             self.queue.put(cmd.strip())
 
-    def send_channel_message(self, message):
+    def send_channel_message(self, message, dpaste=None):
         return self.send_user_message(
             self.channel,
             message,
+            dpaste=dpaste,
         )
 
-    def send_user_message(self, username, message):
+    def send_user_message(self, username, message, dpaste=None):
         message_stripped = message.strip()
         if not self.joined:
             logger.warning(
@@ -121,7 +201,8 @@ class IrcpdbBot(SingleServerIRCBot):
         lines = message_stripped.split('\n')
         chunked = self.get_chunked_lines(lines)
         try:
-            if len(chunked) >= self.dpaste_minimum_response_length:
+            long_response = len(chunked) >= self.dpaste_minimum_response_length
+            if (long_response and dpaste is None) or dpaste is True:
                 dpaste_url = self.send_lines_to_dpaste(lines)
                 self.send_lines(
                     username, "%s (%s lines)" % (

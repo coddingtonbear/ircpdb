@@ -4,14 +4,13 @@
  - Added functionality for automatically sending long messages to Dpaste.
  - Added additional commands including `!!set_dpaste_minimum_response_length`
    and `!!set_message_wait_seconds`.
-
+ - Send a hello message once connected to the channel.
 
 1.0 (2014-10-29)
 ==================
 
  - Forked from rpdb to, instead of opening a socket to interact with,
    
-
 0.1.5 (2014-10-16)
 ==================
 
