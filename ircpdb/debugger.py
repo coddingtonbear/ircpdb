@@ -1,8 +1,9 @@
 import pdb
-import random
 import socket
 import ssl as ssllib
 import sys
+from threading import Thread
+import time
 import traceback
 
 from irc.connection import Factory
@@ -23,13 +24,11 @@ class Ircpdb(pdb.Pdb):
         # Backup stdin and stdout before replacing them by the socket handle
         self.old_stdout = sys.stdout
         self.old_stdin = sys.stdin
+        self.read_timeout = 0.1
 
         connect_params = {}
         if not nickname:
-            nickname = '%s%s' % (
-                socket.gethostname().split('.')[0],
-                random.randrange(0, 999)
-            )
+            nickname = socket.gethostname().split('.')[0]
         if not channel:
             raise NoChannelSelected(
                 "You must specify a channel to connect to."
@@ -51,25 +50,30 @@ class Ircpdb(pdb.Pdb):
         except IOError:
             pass
 
-        handle = StringIO()
-        pdb.Pdb.__init__(self, completekey='tab', stdin=handle, stdout=handle)
-        sys.stdout = sys.stdin = handle
-        bot = IrcpdbBot(
+        self.inhandle = StringIO()
+        self.outhandle = StringIO()
+        pdb.Pdb.__init__(
+            self, completekey='tab', stdin=self.inhandle, stdout=self.outhandle
+        )
+        #sys.stdout = sys.stdin = self.handle
+
+        self.bot = IrcpdbBot(
             channel=channel,
             nickname=nickname,
             server=server,
             port=port,
             password=password,
-            handle=handle,
             **connect_params
         )
-        bot.start()
+
+    def start_bot(self):
+        self.bot.start()
 
     def shutdown(self):
         """Revert stdin and stdout, close the socket."""
         sys.stdout = self.old_stdout
         sys.stdin = self.old_stdin
-        self.skt.close()
+        self.bot.disconnect()
 
     def do_continue(self, arg):
         """Clean-up and do underlying continue."""
@@ -91,10 +95,7 @@ class Ircpdb(pdb.Pdb):
 
     def do_EOF(self, arg):
         """Clean-up and do underlying EOF."""
-        try:
-            return pdb.Pdb.do_EOF(self, arg)
-        finally:
-            self.shutdown()
+        pass
 
 
 def set_trace(**kwargs):
@@ -105,6 +106,14 @@ def set_trace(**kwargs):
     """
     debugger = Ircpdb(**kwargs)
     try:
+        irc_feeder = Thread(
+            target=debugger.bot.process_forever,
+            args=(debugger.outhandle, debugger.inhandle, ),
+        )
+        irc_feeder.daemon = True
+        irc_feeder.start()
+
         debugger.set_trace(sys._getframe().f_back)
     except Exception:
+        debugger.shutdown()
         traceback.print_exc()
