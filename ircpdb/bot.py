@@ -88,12 +88,14 @@ class IrcpdbBot(SingleServerIRCBot):
         )
 
     def send_user_message(self, username, message):
-        self.connection.send_raw(
-            'PRIVMSG %s :%s' % (
-                username,
-                message.strip()
+        message_stripped = message.strip()
+        if message_stripped:
+            self.connection.send_raw(
+                'PRIVMSG %s :%s' % (
+                    username,
+                    message_stripped
+                )
             )
-        )
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()
