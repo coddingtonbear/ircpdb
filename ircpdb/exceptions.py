@@ -5,3 +5,7 @@ class IrcpdbError(Exception):
 
 class NoChannelSelected(IrcpdbError, ValueError):
     pass
+
+
+class DpasteError(IrcpdbError, IOError):
+    pass

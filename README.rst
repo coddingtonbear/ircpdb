@@ -1,5 +1,5 @@
-ircpdb - Remotely debug your Python application from an IRC channel
-===================================================================
+ircpdb - Remotely and collaboratively debug your Python application via IRC
+===========================================================================
 
 Ircpdb is an adaptation of rpdb that, instead of opening a port and
 allowing you to debug over telnet, connects to a configurable IRC

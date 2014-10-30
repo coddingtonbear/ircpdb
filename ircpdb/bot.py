@@ -7,6 +7,10 @@ import time
 
 from irc import strings
 from irc.bot import SingleServerIRCBot, ServerSpec
+import requests
+import six
+
+from .exceptions import DpasteError
 
 
 logger = logging.getLogger(__name__)
@@ -16,6 +20,7 @@ class IrcpdbBot(SingleServerIRCBot):
     def __init__(
         self, channel, nickname, server, port, password,
         limit_access_to, message_wait_seconds,
+        dpaste_minimum_response_length,
         **connect_params
     ):
         self.channel = channel
@@ -23,6 +28,7 @@ class IrcpdbBot(SingleServerIRCBot):
         self.joined = False
         self.pre_join_queue = []
         self.message_wait_seconds = message_wait_seconds
+        self.dpaste_minimum_response_length = dpaste_minimum_response_length
         self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
         super(IrcpdbBot, self).__init__(
@@ -111,24 +117,59 @@ class IrcpdbBot(SingleServerIRCBot):
                 (username, message, )
             )
             return
-        if message_stripped:
-            chunk_size = 450
-            if len(message_stripped) > chunk_size:
-                message_parts = [
-                    message_stripped[i:i+chunk_size]
-                    for i in range(0, len(message_stripped), chunk_size)
-                ]
-            else:
-                message_parts = [message_stripped]
-            for part in message_parts:
-                self.connection.send_raw(
-                    'PRIVMSG %s :%s' % (
-                        username,
-                        part
+
+        lines = message_stripped.split('\n')
+        chunked = self.get_chunked_lines(lines)
+        try:
+            if len(chunked) >= self.dpaste_minimum_response_length:
+                dpaste_url = self.send_lines_to_dpaste(lines)
+                self.send_lines(
+                    username, "%s (%s lines)" % (
+                        dpaste_url,
+                        len(lines)
                     )
                 )
-                if self.message_wait_seconds:
-                    time.sleep(self.message_wait_seconds)
+                return
+        except DpasteError:
+            pass
+        self.send_lines(username, chunked)
+
+    def get_chunked_lines(self, lines, chunk_size=450):
+        chunked_lines = []
+        for line in lines:
+            if len(line) > chunk_size:
+                chunked_lines.extend([
+                    line[i:i+chunk_size]
+                    for i in range(0, len(line), chunk_size)
+                ])
+            else:
+                chunked_lines.append(line)
+        return chunked_lines
+
+    def send_lines_to_dpaste(self, lines):
+        try:
+            response = requests.post(
+                'http://dpaste.com/api/v2/',
+                data={
+                    'content': '\n'.join(lines)
+                }
+            )
+            return response.url
+        except Exception as e:
+            raise DpasteError(str(e))
+
+    def send_lines(self, target, lines):
+        if isinstance(lines, six.string_types):
+            lines = [lines]
+        for part in lines:
+            self.connection.send_raw(
+                'PRIVMSG %s :%s' % (
+                    target,
+                    part
+                )
+            )
+            if self.message_wait_seconds:
+                time.sleep(self.message_wait_seconds)
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()
@@ -140,9 +181,11 @@ class IrcpdbBot(SingleServerIRCBot):
             except IOError:
                 messages = None
             if messages:
-                for message in messages.split('\n'):
-                    logger.debug('>> %s', message)
-                    self.send_channel_message(message.strip())
+                for message in messages.split('(Pdb)'):
+                    stripped = message.strip()
+                    if stripped:
+                        logger.debug('>> %s', stripped)
+                        self.send_channel_message(stripped)
 
             try:
                 self.manifold.process_once(timeout)
