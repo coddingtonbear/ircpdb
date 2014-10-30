@@ -40,9 +40,9 @@ class IrcpdbBot(SingleServerIRCBot):
     def on_welcome(self, c, e):
         logger.debug('Received welcome message, joining %s', self.channel)
         c.join(self.channel)
+        self.joined = True
         for username, message in self.pre_join_queue:
             self.send_user_message(username, message)
-        self.joined = True
 
     def on_privmsg(self, c, e):
         self.send_user_message(
