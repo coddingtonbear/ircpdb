@@ -26,7 +26,12 @@ class IrcpdbBot(SingleServerIRCBot):
         )
 
     def on_nicknameinuse(self, c, e):
-        c.nick(c.get_nickname() + "-" + random.randrange(0, 9999))
+        c.nick(
+            u"%s-%s" % (
+                c.get_nickname(),
+                random.randrange(0, 9999)
+            )
+        )
 
     def on_welcome(self, c, e):
         logger.debug('Received welcome message, joining %s', self.channel)
