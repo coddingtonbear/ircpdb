@@ -21,6 +21,7 @@ class IrcpdbBot(SingleServerIRCBot):
         self.channel = channel
         self.queue = Queue()
         self.joined = False
+        self.message_wait_seconds = message_wait_seconds
         self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
         super(IrcpdbBot, self).__init__(
