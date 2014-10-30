@@ -91,10 +91,20 @@ class Ircpdb(pdb.Pdb):
         """Revert stdin and stdout, close the socket."""
         sys.stdout = self.old_stdout
         sys.stdin = self.old_stdin
-        self.p_A_pipe.close()
-        self.p_B_pipe.close()
-        self.b_A_pipe.close()
-        self.b_B_pipe.close()
+        pipes = [
+            self.p_A_pipe,
+            self.p_B_pipe,
+            self.b_A_pipe,
+            self.b_B_pipe
+        ]
+        for pipe in pipes:
+            try:
+                pipe.close()
+            except IOError:
+                logger.warning(
+                    "IOError encountered while closing a pipe; messages "
+                    "may have been lost."
+                )
         self.bot.disconnect()
 
     def do_continue(self, arg):
