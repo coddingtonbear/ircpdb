@@ -1,13 +1,12 @@
+import os
 import pdb
 import socket
 import ssl as ssllib
 import sys
 from threading import Thread
-import time
 import traceback
 
 from irc.connection import Factory
-from six import StringIO
 
 from .exceptions import NoChannelSelected
 from .bot import IrcpdbBot
@@ -50,11 +49,24 @@ class Ircpdb(pdb.Pdb):
         except IOError:
             pass
 
-        self.inhandle = StringIO()
-        self.outhandle = StringIO()
+        r_pipe, w_pipe = os.pipe()
+        # The A pipe is from the bot to pdb
+        self.p_A_pipe = os.fdopen(r_pipe, 'r')
+        self.b_A_pipe = os.fdopen(w_pipe, 'w')
+
+        r_pipe, w_pipe = os.pipe()
+        # The B pipe is from pdb to the bot
+        self.b_B_pipe = os.fdopen(r_pipe, 'r')
+        self.p_B_pipe = os.fdopen(w_pipe, 'w')
+
         pdb.Pdb.__init__(
-            self, completekey='tab', stdin=self.inhandle, stdout=self.outhandle
+            self,
+            stdin=self.p_A_pipe,
+            stdout=self.p_B_pipe,
         )
+
+        print self.stdin
+        print self.stdout
         #sys.stdout = sys.stdin = self.handle
 
         self.bot = IrcpdbBot(
@@ -93,10 +105,6 @@ class Ircpdb(pdb.Pdb):
 
     do_q = do_exit = do_quit
 
-    def do_EOF(self, arg):
-        """Clean-up and do underlying EOF."""
-        pass
-
 
 def set_trace(**kwargs):
     """Wrapper function to keep the same import x; x.set_trace() interface.
@@ -108,7 +116,7 @@ def set_trace(**kwargs):
     try:
         irc_feeder = Thread(
             target=debugger.bot.process_forever,
-            args=(debugger.outhandle, debugger.inhandle, ),
+            args=(debugger.b_B_pipe, debugger.b_A_pipe, ),
         )
         irc_feeder.daemon = True
         irc_feeder.start()

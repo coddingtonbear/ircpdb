@@ -1,4 +1,6 @@
+import fcntl
 from multiprocessing import Queue
+import os
 import random
 
 from irc import strings
@@ -47,9 +49,14 @@ class IrcpdbBot(SingleServerIRCBot):
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()
+        # Let's mark out inhandle as non-blocking
+        fcntl.fcntl(inhandle, fcntl.F_SETFL, os.O_NONBLOCK)
         while True:
-            messages = inhandle.read()
-            if messages.strip():
+            try:
+                messages = inhandle.read()
+            except IOError:
+                messages = None
+            if messages:
                 for message in messages.split('\n'):
                     print ">> %s" % message.strip()
                     self.connection.send_raw(
@@ -66,4 +73,4 @@ class IrcpdbBot(SingleServerIRCBot):
                     break
                 message = self.queue.get(block=False)
                 print "<< %s" % message.strip()
-                outhandle.write(u'%s\n' % message)
+                outhandle.write(u'%s\r\n' % message)
