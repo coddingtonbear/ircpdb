@@ -3,6 +3,7 @@ import logging
 from multiprocessing import Queue
 import os
 import random
+import time
 
 from irc import strings
 from irc.bot import SingleServerIRCBot, ServerSpec
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 class IrcpdbBot(SingleServerIRCBot):
     def __init__(
         self, channel, nickname, server, port, password,
-        limit_access_to,
+        limit_access_to, message_wait_seconds,
         **connect_params
     ):
         self.channel = channel
@@ -36,6 +37,7 @@ class IrcpdbBot(SingleServerIRCBot):
     def on_welcome(self, c, e):
         logger.debug('Received welcome message, joining %s', self.channel)
         c.join(self.channel)
+        self.joined = True
 
     def on_privmsg(self, c, e):
         self.send_user_message(
@@ -94,6 +96,13 @@ class IrcpdbBot(SingleServerIRCBot):
 
     def send_user_message(self, username, message):
         message_stripped = message.strip()
+        if not self.joined:
+            logger.warning(
+                'Tried to send message %s, '
+                'but was not yet joined to channel.',
+                message
+            )
+            return
         if message_stripped:
             self.connection.send_raw(
                 'PRIVMSG %s :%s' % (
@@ -101,6 +110,8 @@ class IrcpdbBot(SingleServerIRCBot):
                     message_stripped
                 )
             )
+            if self.message_wait_seconds:
+                time.sleep(self.message_wait_seconds)
 
     def process_forever(self, inhandle, outhandle, timeout=0.1):
         self._connect()

@@ -22,7 +22,8 @@ class Ircpdb(pdb.Pdb):
         self, channel=None, nickname=None,
         server='chat.freenode.net', port=6697,
         password=None, ssl=True,
-        limit_access_to=None
+        limit_access_to=None,
+        message_wait_seconds=1,
     ):
         """Initialize the socket and initialize pdb."""
 
@@ -82,6 +83,7 @@ class Ircpdb(pdb.Pdb):
             port=port,
             password=password,
             limit_access_to=limit_access_to,
+            message_wait_seconds=message_wait_seconds,
             **connect_params
         )
 
