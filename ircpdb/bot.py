@@ -112,8 +112,8 @@ class IrcpdbBot(SingleServerIRCBot):
             )
             return
         if message_stripped:
-            chunk_size = 500
-            if len(message_stripped) > 512:
+            chunk_size = 450
+            if len(message_stripped) > chunk_size:
                 message_parts = [
                     message_stripped[i:i+chunk_size]
                     for i in range(0, len(message_stripped), chunk_size)
