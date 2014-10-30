@@ -1,4 +1,4 @@
-README.rst
-LICENSE.txt
-CHANGES.txt
-requirements.txt
+include README.rst
+include LICENSE.txt
+include CHANGES.txt
+include requirements.txt
