@@ -70,8 +70,8 @@ class IrcpdbBot(SingleServerIRCBot):
         if self.limit_access_to and nickname not in self.limit_access_to:
             self.send_channel_message(
                 "I'm sorry, %s, you are not allowed to give commands "
-                "to this debugger.  Only the following users have "
-                "permission from one of the following users: %s." % (
+                "to this debugger.  Please ask one of the following "
+                "users for permission to use the debugger: %s." % (
                     nickname,
                     ', '.join(self.limit_access_to)
                 )
