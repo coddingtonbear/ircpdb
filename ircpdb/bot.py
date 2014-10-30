@@ -124,7 +124,7 @@ class IrcpdbBot(SingleServerIRCBot):
                 self.connection.send_raw(
                     'PRIVMSG %s :%s' % (
                         username,
-                        message_stripped
+                        part
                     )
                 )
                 if self.message_wait_seconds:
