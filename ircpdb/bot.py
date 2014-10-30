@@ -21,6 +21,7 @@ class IrcpdbBot(SingleServerIRCBot):
         self.channel = channel
         self.queue = Queue()
         self.joined = False
+        self.pre_join_queue = []
         self.message_wait_seconds = message_wait_seconds
         self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
@@ -39,6 +40,8 @@ class IrcpdbBot(SingleServerIRCBot):
     def on_welcome(self, c, e):
         logger.debug('Received welcome message, joining %s', self.channel)
         c.join(self.channel)
+        for username, message in self.pre_join_queue:
+            self.send_user_message(username, message)
         self.joined = True
 
     def on_privmsg(self, c, e):
@@ -101,8 +104,11 @@ class IrcpdbBot(SingleServerIRCBot):
         if not self.joined:
             logger.warning(
                 'Tried to send message %s, '
-                'but was not yet joined to channel.',
+                'but was not yet joined to channel. Queueing...',
                 message
+            )
+            self.pre_join_queue.append(
+                (username, message, )
             )
             return
         if message_stripped:
