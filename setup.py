@@ -31,7 +31,7 @@ except IOError:
 
 setup(
     name="ircpdb",
-    version="1.0.5",
+    version="1.0.6",
     description="Remotely debug your Python application via IRC.",
     long_description=README + "\n\n" + CHANGES,
     author="Adam Coddington",

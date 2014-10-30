@@ -116,7 +116,14 @@ class IrcpdbBot(SingleServerIRCBot):
                     logger.debug('>> %s', message)
                     self.send_channel_message(message.strip())
 
-            self.manifold.process_once(timeout)
+            try:
+                self.manifold.process_once(timeout)
+            except UnicodeDecodeError:
+                # This just *happens* -- I think these are coming from
+                # maybe MOTD messages?  It isn't clear.
+                logger.warning(
+                    'UnicodeDecodeError raised while processing messages.'
+                )
 
             while True:
                 if self.queue.empty():
