@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class Ircpdb(pdb.Pdb):
     def __init__(
         self, channel=None, nickname=None,
-        server='chat.freenode.net', port=6667,
+        server='chat.freenode.net', port=6697,
         password=None, ssl=True,
         limit_access_to=None
     ):
