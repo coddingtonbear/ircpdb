@@ -55,7 +55,9 @@ class IrcpdbBot(SingleServerIRCBot):
             (
                 "Please prefix debugger commands with either '!' or '%s:'. "
                 "For pdb help, say '!help'; for a list of ircpdb-specific "
-                "commands, say '!!help'."
+                "commands, say '!!help'." % (
+                    self.connection.nickname
+                )
             )
         ]
         for line in hello_lines:
