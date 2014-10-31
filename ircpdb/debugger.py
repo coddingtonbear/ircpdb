@@ -24,7 +24,7 @@ class Ircpdb(pdb.Pdb):
         password=None, ssl=True,
         limit_access_to=None,
         message_wait_seconds=0.8,
-        dpaste_minimum_response_length=6,
+        dpaste_minimum_response_length=10,
     ):
         """Initialize the socket and initialize pdb."""
 

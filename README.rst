@@ -74,7 +74,7 @@ Options
   each line individually via IRC.  This is a useful parameter to use
   if you happen to be connected to a server having very austere
   limits on the number of lines a client can send per minute.
-  Default: `6` lines.
+  Default: `10` lines.
 
 Installation
 ------------
