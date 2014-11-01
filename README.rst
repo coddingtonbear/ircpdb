@@ -105,7 +105,7 @@ Just to make absolutely sure this is clear: you're both responsible for
 determining what level of risk you are comfortable with, and for taking
 appropriate actions to mitigate that risk.
 
-As is clearly and thunderously stated library's license (stored in
+As is clearly and thunderously stated library's license (see the included
 ``LICENSE.txt``)::
 
     THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
