@@ -10,7 +10,7 @@ channel so you can collaboratively debug an application remotely.
     import ircpdb
     ircpdb.set_trace(
         channel="#debugger_hangout",
-    )
+    )  # Warning!  This is dangerous -- see `Security Disclaimer` below.
 
 By default, ircpdb will create the channel you specify on Freenode
 and randomly select a nickname for itself, but you can feel free to
@@ -23,7 +23,7 @@ configure ircpdb to connect anywhere:
         channel="#debugger_hangout",
         nickname='im_a_debugger',
         server='irc.mycompany.org',
-        limit_access_to=['mynickname'],
+        limit_access_to=['mynickname'],  # See 'Security Disclaimer' below.
         port=6667,
         ssl=True,
     )  # See 'Options' below for descriptions of the above arguments
@@ -47,6 +47,13 @@ username the bot selected)::
 ::
 
     MyHostname: help
+
+Installation
+------------
+
+From ``pip``::
+
+    pip install ircpdb
 
 Options
 -------
@@ -76,12 +83,44 @@ Options
   limits on the number of lines a client can send per minute.
   Default: `10` lines.
 
-Installation
-------------
+Security Disclaimer
+-------------------
 
-From ``pip``::
+The way that this library works is **inherently** **dangerous**; given that
+you're able to execute arbitrary Python code from within your debugger,
+it is strongly recommended that you take all reasonable measures to ensure
+that you control who are able to execute debugger commands.
 
-    pip install ircpdb
+To mitigate these dangers, you should always use an SSL-capable IRC
+server (read: leave the `ssl` argument set to it's default: `True`)
+and use *at* *least* one of the following options:
+
+* Use `limit_access_to` to limit which users (by nickname) are allowed to
+  interact with the debugger.  Note that this does not mitigate your
+  risk completely due to the way nicknames are handled on IRC servers.
+* *and/or*, and this is considerably safer, connect to an IRC server
+  you or a company you work for owns rather than Freenode (the default).
+
+Just to make absolutely sure this is clear: you're both responsible for
+determining what level of risk you are comfortable with, and for taking
+appropriate actions to mitigate that risk.
+
+As is clearly and thunderously stated library's license (stored in
+``LICENSE.txt``)::
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+    FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+    OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+    HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+    OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+    SUCH DAMAGE.
+
+Good luck, and happy debugging!
 
 Troubleshooting
 ---------------
