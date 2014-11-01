@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class IrcpdbBot(SingleServerIRCBot):
+    PROMPT = '(PDB)>>'
+
     def __init__(
         self, channel, nickname, server, port, password,
         limit_access_to, message_wait_seconds,
@@ -63,7 +65,8 @@ class IrcpdbBot(SingleServerIRCBot):
         for line in hello_lines:
             self.send_user_message(
                 self.channel,
-                line
+                line,
+                prompt=False
             )
         for username, message in self.pre_join_queue:
             self.send_user_message(username, message)
@@ -71,8 +74,10 @@ class IrcpdbBot(SingleServerIRCBot):
     def on_privmsg(self, c, e):
         self.send_user_message(
             e.source.nick,
-            "Ircdb currently supports sending/receiving messages "
-            "using only the IRC channel."
+            "%s only accepts commands from the %s IRC channel." % (
+                self.connection.nickname,
+                self.channel,
+            )
         )
 
     def on_pubmsg(self, c, e):
@@ -95,7 +100,8 @@ class IrcpdbBot(SingleServerIRCBot):
         logger.debug('Received command: %s', cmd)
         nickname = e.source.nick
         if self.limit_access_to and nickname not in self.limit_access_to:
-            self.send_channel_message(
+            self.send_user_message(
+                nickname,
                 "I'm sorry, %s, you are not allowed to give commands "
                 "to this debugger.  Please ask one of the following "
                 "users for permission to use the debugger: %s." % (
@@ -107,15 +113,37 @@ class IrcpdbBot(SingleServerIRCBot):
 
         if cmd.startswith("!allow"):
             allows = cmd.split(' ')
-            self.limit_access_to.extend(allows[1:])
+            usernames = allows[1:]
+            if not self.limit_access_to:
+                self.limit_access_to.append(nickname)
+            self.limit_access_to.extend(usernames)
             self.send_channel_message(
                 "The following users have been granted access to the debugger:"
                 " %s." % (
-                    ', '.join(allows[1:])
+                    ', '.join(usernames)
                 )
             )
-            return
-        if cmd.startswith("!set_dpaste_minimum_response_length"):
+        elif cmd.startswith("!forbid"):
+            forbids = cmd.split(' ')
+            usernames = forbids[1:]
+            try:
+                for username in usernames:
+                    self.limit_access_to.remove(username)
+                self.send_channel_message(
+                    "The following users have been forbidden access to the "
+                    "debugger: %s." % (
+                        ', '.join(usernames)
+                    )
+                )
+            except ValueError:
+                self.send_channel_message(
+                    "The users %s are not in the 'allows' list.  You must "
+                    "have a defined 'allows' list to remove users from it." % (
+                        ', '.join(usernames)
+                    )
+                )
+
+        elif cmd.startswith("!set_dpaste_minimum_response_length"):
             value = cmd.split(' ')
             try:
                 self.dpaste_minimum_response_length = int(value[1])
@@ -130,8 +158,7 @@ class IrcpdbBot(SingleServerIRCBot):
                     "An error was encountered while setting the "
                     "dpaste_minimum_response_length setting. %s"
                 )
-            return
-        if cmd.startswith("!set_message_wait_seconds"):
+        elif cmd.startswith("!set_message_wait_seconds"):
             value = cmd.split(' ')
             try:
                 self.message_wait_seconds = float(value[1])
@@ -146,13 +173,16 @@ class IrcpdbBot(SingleServerIRCBot):
                     "An error was encountered while setting the "
                     "message_wait_seconds setting."
                 )
-            return
-        if cmd.startswith("!help"):
+        elif cmd.startswith("!help"):
             available_commands = textwrap.dedent("""
                 Available Commands:
                 * !!allow NICKNAME
                   Add NICKNAME to the list of users that are allowed to
                   interact with the debugger. Current value: {limit_access_to}.
+
+                * !!forbid NICKNAME
+                  Remove NICKNAME from the list of users that are allowed
+                  to interact with the debugger.
 
                 * !!set_dpaste_minimum_response_length INTEGER
                   Try to send messages this length or longer in lines
@@ -176,18 +206,17 @@ class IrcpdbBot(SingleServerIRCBot):
                 available_commands,
                 dpaste=True,
             )
-            return
         else:
             self.queue.put(cmd.strip())
 
-    def send_channel_message(self, message, dpaste=None):
+    def send_channel_message(self, message, dpaste=None, prompt=True):
         return self.send_user_message(
             self.channel,
             message,
             dpaste=dpaste,
         )
 
-    def send_user_message(self, username, message, dpaste=None):
+    def send_user_message(self, username, message, dpaste=None, prompt=True):
         message_stripped = message.strip()
         if not self.joined:
             logger.warning(
@@ -207,15 +236,23 @@ class IrcpdbBot(SingleServerIRCBot):
             if (long_response and dpaste is None) or dpaste is True:
                 dpaste_url = self.send_lines_to_dpaste(lines)
                 self.send_lines(
-                    username, "%s (%s lines)" % (
+                    username, "See %s (%s lines in result)" % (
                         dpaste_url,
                         len(lines)
                     )
                 )
+                if prompt:
+                    self.send_lines(
+                        username, self.PROMPT
+                    )
                 return
         except DpasteError:
             pass
         self.send_lines(username, chunked)
+        if prompt:
+            self.send_lines(
+                username, self.PROMPT
+            )
 
     def get_chunked_lines(self, lines, chunk_size=450):
         chunked_lines = []
