@@ -74,10 +74,13 @@ class IrcpdbBot(SingleServerIRCBot):
     def on_privmsg(self, c, e):
         self.send_user_message(
             e.source.nick,
-            "%s only accepts commands from the %s IRC channel." % (
+            "I'm sorry, %s, %s only accepts commands from the %s "
+            "IRC channel." % (
+                e.source.nick,
                 self.connection.nickname,
                 self.channel,
-            )
+            ),
+            prompt=False,
         )
 
     def on_pubmsg(self, c, e):
@@ -105,7 +108,8 @@ class IrcpdbBot(SingleServerIRCBot):
                 "I'm sorry, %s, you are not allowed to give commands "
                 "to this debugger." % (
                     nickname,
-                )
+                ),
+                prompt=False,
             )
             return
 
