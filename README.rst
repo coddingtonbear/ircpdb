@@ -10,11 +10,12 @@ channel so you can collaboratively debug an application remotely.
     import ircpdb
     ircpdb.set_trace(
         channel="#debugger_hangout",
-    )  # Warning!  This is dangerous -- see `Security Disclaimer` below.
+        limit_access_to=['mynickname'], # List of nicknames that are allowed access
+    )
 
-By default, ircpdb will create the channel you specify on Freenode
-and randomly select a nickname for itself, but you can feel free to
-configure ircpdb to connect anywhere:
+By default, ircpdb will select a nickname on its own and enter the channel
+you specify on Freenode, but you can feel free to configure ircpdb to
+connect anywhere:
 
 .. code-block::
 
@@ -23,7 +24,7 @@ configure ircpdb to connect anywhere:
         channel="#debugger_hangout",
         nickname='im_a_debugger',
         server='irc.mycompany.org',
-        limit_access_to=['mynickname'],  # See 'Security Disclaimer' below.
+        limit_access_to=['mynickname', 'someothernickname', 'mybestfriend'],
         port=6667,
         ssl=True,
     )  # See 'Options' below for descriptions of the above arguments
@@ -60,6 +61,8 @@ Options
 
 * ``channel`` (**REQUIRED**): The name of the channel (starting with ``#``)
   to connect to on the IRC server.
+* ``limit_access_to`` (**REQUIRED**): A list of nicknames that are allowed
+  to interact with the debugger.
 * ``nickname``: The nickname to use when connecting. Note that an alternate
   name will be selected if this name is already in use. Defaults to using
   the hostname of the machine on which the debugger was executed.
@@ -69,9 +72,6 @@ Options
 * ``ssl``: Use SSL when connecting to the IRC server?  Default: ``True``.
 * ``password``: The server password (if necessary) for the IRC server.
   Default: ``None``.
-* ``limit_access_to``: A list of nicknames that are allowed to interact
-  with the debugger.  An empty list allows all nicknames to access the
-  debugger.  Default: ``[]``.
 * ``message_wait_seconds``: The number of seconds that the bot should
   wait between sending messages on IRC.  Many servers, including Freenode,
   will kick clients that send too many messages in too short of a time
@@ -91,15 +91,13 @@ you're able to execute arbitrary Python code from within your debugger,
 it is strongly recommended that you take all reasonable measures to ensure
 that you control who are able to execute debugger commands.
 
-To mitigate these dangers, you should always use an SSL-capable IRC
-server (read: leave the ``ssl`` argument set to it's default: ``True``)
-and use *at* *least* one of the following options:
+To limit your risk as much as possible, you should consider taking the
+following steps:
 
-* Use ``limit_access_to`` to limit which users (by nickname) are allowed to
-  interact with the debugger.  Note that this does not mitigate your
-  risk completely due to the way nicknames are handled on IRC servers.
-* *and/or*, and this is considerably safer, connect to an IRC server
-  you or a company you work for owns rather than Freenode (the default).
+* Always use an SSL-capable IRC server (read: leave the ``ssl`` argument
+  set to it's default: ``True``).
+* Connect to an IRC server you or a company you work for owns rather than
+  Freenode (the default).
 
 Just to make absolutely sure this is clear: you're both responsible for
 determining what level of risk you are comfortable with, and for taking

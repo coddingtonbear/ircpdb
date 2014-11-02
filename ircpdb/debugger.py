@@ -10,7 +10,7 @@ import traceback
 from irc.connection import Factory
 import six
 
-from .exceptions import NoChannelSelected
+from .exceptions import NoAllowedNicknamesSelected, NoChannelSelected
 from .bot import IrcpdbBot
 
 
@@ -33,8 +33,12 @@ class Ircpdb(pdb.Pdb):
         self.old_stdin = sys.stdin
         self.read_timeout = 0.1
 
-        if not limit_access_to:
-            limit_access_to = []
+        if limit_access_to is None:
+            raise NoAllowedNicknamesSelected(
+                "You must specify a list of nicknames that are allowed "
+                "to interact with the debugger using the "
+                "`limit_access_to` keyword argument."
+            )
         elif isinstance(limit_access_to, six.string_types):
             limit_access_to = [limit_access_to]
 
@@ -43,7 +47,8 @@ class Ircpdb(pdb.Pdb):
             nickname = socket.gethostname().split('.')[0]
         if not channel:
             raise NoChannelSelected(
-                "You must specify a channel to connect to."
+                "You must specify a channel to connect to using the "
+                "`channel` keyword argument."
             )
         if ssl:
             connect_params['connect_factory'] = (

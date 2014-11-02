@@ -99,14 +99,12 @@ class IrcpdbBot(SingleServerIRCBot):
     def do_command(self, e, cmd):
         logger.debug('Received command: %s', cmd)
         nickname = e.source.nick
-        if self.limit_access_to and nickname not in self.limit_access_to:
+        if nickname not in self.limit_access_to:
             self.send_user_message(
                 nickname,
                 "I'm sorry, %s, you are not allowed to give commands "
-                "to this debugger.  Please ask one of the following "
-                "users for permission to use the debugger: %s." % (
+                "to this debugger." % (
                     nickname,
-                    ', '.join(self.limit_access_to)
                 )
             )
             return
@@ -142,6 +140,12 @@ class IrcpdbBot(SingleServerIRCBot):
                         ', '.join(usernames)
                     )
                 )
+            if not self.limit_access_to:
+                self.send_channel_message(
+                    "No users are allowed to interact with the debugger; "
+                    "continuing from breakpoint."
+                )
+                self.queue.put('continue')
 
         elif cmd.startswith("!set_dpaste_minimum_response_length"):
             value = cmd.split(' ')
