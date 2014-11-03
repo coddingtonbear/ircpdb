@@ -1,6 +1,8 @@
 #!/usr/bin/python
 import os
+import sys
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 
 requirements_path = os.path.join(
@@ -20,6 +22,22 @@ except ImportError:
             if not req.startswith('-')
             and not req.startswith('#')
         ]
+
+# Python 2.6 does not come with importlib pre-installed
+if sys.version_info < (2, 7):
+    requirements.append('importlib>=1.0.1')
+
+
+class Tox(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import tox
+        errno = tox.cmdline(self.test_args)
+        sys.exit(errno)
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -41,6 +59,8 @@ setup(
     url="http://github.com/coddingtonbear/ircpdb",
     packages=find_packages(),
     install_requires=requirements,
+    tests_require=['tox', 'pytest', 'mock'],
+    cmdclass = {'test': Tox},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
