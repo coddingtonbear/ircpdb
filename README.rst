@@ -1,5 +1,5 @@
-ircpdb - Remotely and collaboratively debug your Python application via IRC
-===========================================================================
+ircpdb - Remotely and collaboratively debug your Python application via an IRC channel
+======================================================================================
 
 .. image:: https://travis-ci.org/coddingtonbear/ircpdb.svg?branch=master
     :target: https://travis-ci.org/coddingtonbear/ircpdb
