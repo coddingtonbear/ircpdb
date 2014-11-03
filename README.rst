@@ -140,7 +140,7 @@ connecting to the IRC server:
 .. code-block::
 
    import logging
-   logging.basicConfig(level=logging.DEBUG)
+   logging.basicConfig(filename='/path/to/somewhere.log', level=logging.DEBUG)
 
 Author(s)
 ---------
