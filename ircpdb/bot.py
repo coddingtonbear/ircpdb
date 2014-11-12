@@ -264,7 +264,7 @@ class IrcpdbBot(SingleServerIRCBot):
             command='ACTION',
         )
 
-    def get_chunked_lines(self, lines, chunk_size=450):
+    def get_chunked_lines(self, lines, chunk_size=400):
         chunked_lines = []
         for line in lines:
             if len(line) > chunk_size:
