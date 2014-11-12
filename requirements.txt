@@ -1,3 +1,3 @@
-irc>=0.9
+irc>=9.0,<10.0
 six
 requests>=1.0.0
