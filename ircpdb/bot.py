@@ -52,24 +52,22 @@ class IrcpdbBot(SingleServerIRCBot):
         c.join(self.channel)
         self.joined = True
 
-        hello_lines = [
-            "Debugger ready (on host %s)" % socket.gethostname(),
-            (
-                "Please prefix debugger commands with either '!' or '%s:'. "
-                "For pdb help, say '!help'; for a list of ircpdb-specific "
-                "commands, say '!!help'." % (
-                    self.connection.nickname
+        self.send_channel_message(
+            [
+                "Debugger ready (on host %s)" % socket.gethostname(),
+                (
+                    "Please prefix debugger commands with either '!' or "
+                    "'%s:'. For pdb help, say '!help'; for a list of "
+                    "ircpdb-specific commands, say '!!help'." % (
+                        self.connection.nickname
+                    )
                 )
-            )
-        ]
-        for line in hello_lines:
-            self.send_user_message(
-                self.channel,
-                line,
-                prompt=False
-            )
+            ],
+            dpaste=False
+        )
         for username, message in self.pre_join_queue:
             self.send_user_message(username, message)
+        self.send_prompt()
 
     def on_privmsg(self, c, e):
         self.send_user_message(
@@ -79,8 +77,7 @@ class IrcpdbBot(SingleServerIRCBot):
                 e.source.nick,
                 self.connection.nickname,
                 self.channel,
-            ),
-            prompt=False,
+            )
         )
 
     def on_pubmsg(self, c, e):
@@ -108,8 +105,7 @@ class IrcpdbBot(SingleServerIRCBot):
                 "I'm sorry, %s, you are not allowed to give commands "
                 "to this debugger." % (
                     nickname,
-                ),
-                prompt=False,
+                )
             )
             return
 
@@ -217,15 +213,14 @@ class IrcpdbBot(SingleServerIRCBot):
         else:
             self.queue.put(cmd.strip())
 
-    def send_channel_message(self, message, dpaste=None, prompt=True):
+    def send_channel_message(self, message, dpaste=None):
         return self.send_user_message(
             self.channel,
             message,
             dpaste=dpaste,
         )
 
-    def send_user_message(self, username, message, dpaste=None, prompt=True):
-        message_stripped = message.strip()
+    def send_user_message(self, username, message, dpaste=None):
         if not self.joined:
             logger.warning(
                 'Tried to send message %s, '
@@ -237,7 +232,11 @@ class IrcpdbBot(SingleServerIRCBot):
             )
             return
 
-        lines = message_stripped.split('\n')
+        if isinstance(message, six.string_types):
+            message_stripped = message.strip()
+            lines = message_stripped.split('\n')
+        else:
+            lines = message
         chunked = self.get_chunked_lines(lines)
         try:
             long_response = len(chunked) >= self.dpaste_minimum_response_length
@@ -249,20 +248,18 @@ class IrcpdbBot(SingleServerIRCBot):
                         len(lines)
                     )
                 )
-                if prompt:
-                    self.send_prompt(username)
                 return
         except DpasteError:
             pass
         self.send_lines(username, chunked)
-        if prompt:
-            self.send_prompt(username)
 
-    def send_prompt(self, channel=None):
-        if channel is None:
-            channel = self.channel
+    def send_prompt(self):
+        if not self.joined:
+            # We'll display a 'ready' message once we've joined anyway;
+            # let's just silently drop this.
+            return
         self.send_lines(
-            channel,
+            self.channel,
             self.PROMPT,
             command='ACTION',
         )
@@ -328,6 +325,7 @@ class IrcpdbBot(SingleServerIRCBot):
                     if stripped:
                         logger.debug('>> %s', stripped)
                         self.send_channel_message(stripped)
+                self.send_prompt()
 
             try:
                 self.manifold.process_once(timeout)
