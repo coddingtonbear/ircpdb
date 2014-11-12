@@ -300,6 +300,8 @@ class IrcpdbBot(SingleServerIRCBot):
         if isinstance(lines, six.string_types):
             lines = [lines]
         for part in lines:
+            if not part:
+                continue
             self.connection.send_raw(
                 'PRIVMSG %s %s%s%s' % (
                     target,
