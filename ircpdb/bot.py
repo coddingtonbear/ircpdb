@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class IrcpdbBot(SingleServerIRCBot):
-    PROMPT = '(PDB)>>'
+    PROMPT = 'ready'
 
     def __init__(
         self, channel, nickname, server, port, password,
@@ -250,17 +250,22 @@ class IrcpdbBot(SingleServerIRCBot):
                     )
                 )
                 if prompt:
-                    self.send_lines(
-                        username, self.PROMPT
-                    )
+                    self.send_prompt(username)
                 return
         except DpasteError:
             pass
         self.send_lines(username, chunked)
         if prompt:
-            self.send_lines(
-                username, self.PROMPT
-            )
+            self.send_prompt(username)
+
+    def send_prompt(self, channel=None):
+        if channel is None:
+            channel = self.channel
+        self.send_lines(
+            channel,
+            self.PROMPT,
+            command='ACTION',
+        )
 
     def get_chunked_lines(self, lines, chunk_size=450):
         chunked_lines = []
@@ -286,14 +291,21 @@ class IrcpdbBot(SingleServerIRCBot):
         except Exception as e:
             raise DpasteError(str(e))
 
-    def send_lines(self, target, lines):
+    def send_lines(self, target, lines, command=None):
+        prefix = ':'
+        suffix = ''
+        if command is not None:
+            prefix = ':\001%s ' % command
+            suffix = '\001'
         if isinstance(lines, six.string_types):
             lines = [lines]
         for part in lines:
             self.connection.send_raw(
-                'PRIVMSG %s :%s' % (
+                'PRIVMSG %s %s%s%s' % (
                     target,
-                    part
+                    prefix,
+                    part,
+                    suffix
                 )
             )
             if self.message_wait_seconds:
