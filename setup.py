@@ -49,7 +49,7 @@ except IOError:
 
 setup(
     name="ircpdb",
-    version="1.3",
+    version="1.4",
     description=(
         "Remotely and collaboratively debug your Python application via IRC"
     ),
