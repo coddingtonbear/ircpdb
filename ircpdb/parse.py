@@ -24,8 +24,11 @@ def parse_irc_uri(uri):
 
     parsed = urlparse(uri)
     if sys.version_info < (2, 7) and '?' in parsed.path:
-        parsed.query = parsed.path[parsed.path.find('?')+1:]
-        parsed.path = parsed.path[:parsed.path.find('?')]
+        query = parsed.path[parsed.path.find('?')+1:]
+        path = parsed.path[:parsed.path.find('?')]
+    else:
+        query = parsed.query
+        path = parsed.path
 
     result = {}
 
@@ -33,8 +36,8 @@ def parse_irc_uri(uri):
         result['server'] = parsed.hostname
     if parsed.scheme:
         result['ssl'] = '+ssl' in parsed.scheme
-    if parsed.path and len(parsed.path) > 1:
-        result['channel'] = unquote(parsed.path[1:])
+    if path and len(path) > 1:
+        result['channel'] = unquote(path[1:])
     if parsed.username:
         result['nickname'] = unquote(parsed.username)
     if parsed.password:
@@ -42,8 +45,8 @@ def parse_irc_uri(uri):
     if parsed.port:
         result['port'] = int(parsed.port)
 
-    if parsed.query:
-        for keyword, value_list in parse_qs(parsed.query).items():
+    if query:
+        for keyword, value_list in parse_qs(query).items():
             value = value_list[0]
             result[keyword] = PARAMS.get(keyword, text_type)(value)
 
