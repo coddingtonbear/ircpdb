@@ -1,3 +1,5 @@
+import sys
+
 from six import text_type
 from six.moves.urllib.parse import (
     parse_qs,
@@ -21,6 +23,10 @@ def parse_irc_uri(uri):
     uri = uri.replace('#', '%23')
 
     parsed = urlparse(uri)
+    if sys.version_info < (2, 7) and '?' in parsed.path:
+        parsed.query = parsed.path[parsed.path.find('?')+1:]
+        parsed.path = parsed.path[:parsed.path.find('?')]
+
     result = {}
 
     if parsed.hostname:
@@ -28,7 +34,7 @@ def parse_irc_uri(uri):
     if parsed.scheme:
         result['ssl'] = '+ssl' in parsed.scheme
     if parsed.path and len(parsed.path) > 1:
-        result['channel'] = unquote(parsed.path[1:].strip('?'))
+        result['channel'] = unquote(parsed.path[1:])
     if parsed.username:
         result['nickname'] = unquote(parsed.username)
     if parsed.password:
