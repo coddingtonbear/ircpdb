@@ -37,6 +37,7 @@ class TestURIParser(TestCase):
         expected_result = {
             'server': 'hostname',
             'channel': '#channel',
+            'ssl': False,
         }
 
         self.assertEqual(

@@ -25,7 +25,7 @@ def parse_irc_uri(uri):
 
     if parsed.hostname:
         result['server'] = parsed.hostname
-    if parsed.scheme and '+ssl' in parsed.scheme:
+    if parsed.scheme:
         result['ssl'] = '+ssl' in parsed.scheme
     if parsed.path and len(parsed.path) > 1:
         result['channel'] = unquote(parsed.path[1:])
