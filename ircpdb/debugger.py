@@ -10,47 +10,57 @@ import traceback
 from irc.connection import Factory
 import six
 
-from .exceptions import NoAllowedNicknamesSelected, NoChannelSelected
 from .bot import IrcpdbBot
+from .exceptions import NoAllowedNicknamesSelected, NoChannelSelected
+from .parse import parse_irc_uri
 
 
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_PARAMS = {
+    'channel': None,
+    'nickname': None,
+    'server': 'chat.freenode.net',
+    'port': 6697,
+    'password': None,
+    'ssl': True,
+    'limit_access_to': None,
+    'message_wait_seconds': 0.8,
+    'dpaste_minimum_response_length': 10,
+}
+
+
 class Ircpdb(pdb.Pdb):
-    def __init__(
-        self, channel=None, nickname=None,
-        server='chat.freenode.net', port=6697,
-        password=None, ssl=True,
-        limit_access_to=None,
-        message_wait_seconds=0.8,
-        dpaste_minimum_response_length=10,
-    ):
+    def __init__(self, uri=None, **kwargs):
         """Initialize the socket and initialize pdb."""
+        params = DEFAULT_PARAMS.copy()
+        params.update(parse_irc_uri(uri))
+        params.update(kwargs)
 
         # Backup stdin and stdout before replacing them by the socket handle
         self.old_stdout = sys.stdout
         self.old_stdin = sys.stdin
         self.read_timeout = 0.1
 
-        if limit_access_to is None:
+        if not params.get('limit_access_to'):
             raise NoAllowedNicknamesSelected(
                 "You must specify a list of nicknames that are allowed "
                 "to interact with the debugger using the "
                 "`limit_access_to` keyword argument."
             )
-        elif isinstance(limit_access_to, six.string_types):
-            limit_access_to = [limit_access_to]
+        elif isinstance(params.get('limit_access_to'), six.string_types):
+            params['limit_access_to'] = [params.get('limit_access_to')]
 
         connect_params = {}
-        if not nickname:
-            nickname = socket.gethostname().split('.')[0]
-        if not channel:
+        if not params.get('nickname'):
+            params['nickname'] = socket.gethostname().split('.')[0]
+        if not params.get('channel'):
             raise NoChannelSelected(
                 "You must specify a channel to connect to using the "
                 "`channel` keyword argument."
             )
-        if ssl:
+        if params.get('ssl'):
             connect_params['connect_factory'] = (
                 Factory(wrapper=ssllib.wrap_socket)
             )
@@ -59,9 +69,9 @@ class Ircpdb(pdb.Pdb):
         try:
             logger.info(
                 "ircpdb has connected to %s:%s on %s\n",
-                server,
-                port,
-                channel
+                params.get('server'),
+                params.get('port'),
+                params.get('channel')
             )
         except IOError:
             pass
@@ -83,14 +93,16 @@ class Ircpdb(pdb.Pdb):
         )
 
         self.bot = IrcpdbBot(
-            channel=channel,
-            nickname=nickname,
-            server=server,
-            port=port,
-            password=password,
-            limit_access_to=limit_access_to,
-            message_wait_seconds=message_wait_seconds,
-            dpaste_minimum_response_length=dpaste_minimum_response_length,
+            channel=params.get('channel'),
+            nickname=params.get('nickname'),
+            server=params.get('server'),
+            port=params.get('port'),
+            password=params.get('password'),
+            limit_access_to=params.get('limit_access_to'),
+            message_wait_seconds=params.get('message_wait_seconds'),
+            dpaste_minimum_response_length=(
+                params.get('dpaste_minimum_response_length')
+            ),
             **connect_params
         )
 
@@ -133,13 +145,13 @@ class Ircpdb(pdb.Pdb):
     do_q = do_exit = do_quit
 
 
-def set_trace(**kwargs):
+def set_trace(*args, **kwargs):
     """Wrapper function to keep the same import x; x.set_trace() interface.
 
     We catch all the possible exceptions from pdb and cleanup.
 
     """
-    debugger = Ircpdb(**kwargs)
+    debugger = Ircpdb(*args, **kwargs)
     try:
         irc_feeder = Thread(
             target=debugger.bot.process_forever,
