@@ -1,3 +1,13 @@
+1.5 (unreleased)
+================
+
+ - Adds functionality for specifying configuration parameters via a single
+   argument containing a URI.  Rather than specifying potentially a dozen
+   separate parameters, one can now provide a single string; for example:
+   "irc+ssl://bot@chat.freenode.net:6667/#mychannel?limit_access_to=me".
+ - Adds ability to specify default configuration parameters via environment
+   variable named 'DEFAULT_IRCPDB_URI'.
+
 1.4 (2014-11-11)
 ================
 
@@ -34,6 +44,7 @@
 ==================
 
  - Forked from rpdb to, instead of opening a socket to interact with,
+   opening a connection to an IRC channel.
    
 0.1.5 (2014-10-16)
 ==================
