@@ -40,20 +40,12 @@ class Tox(TestCommand):
         sys.exit(errno)
 
 
-here = os.path.abspath(os.path.dirname(__file__))
-try:
-    README = open(os.path.join(here, 'README.rst')).read()
-    CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
-except IOError:
-    README = CHANGES = ''
-
 setup(
     name="ircpdb",
     version="1.4.1",
     description=(
         "Remotely and collaboratively debug your Python application via IRC"
     ),
-    long_description=README + "\n\n" + CHANGES,
     author="Adam Coddington",
     author_email="me@adamcoddington.net",
     url="http://github.com/coddingtonbear/ircpdb",
