@@ -151,6 +151,10 @@ def set_trace(*args, **kwargs):
     We catch all the possible exceptions from pdb and cleanup.
 
     """
+    if not args and 'DEFAULT_IRCPDB_URI' in os.environ:
+        args = (
+            os.environ['DEFAULT_IRCPDB_URI'],
+        )
     debugger = Ircpdb(*args, **kwargs)
     try:
         irc_feeder = Thread(
