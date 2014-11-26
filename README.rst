@@ -68,10 +68,15 @@ From ``pip``::
 Options
 -------
 
-* ``channel`` (**REQUIRED**): The name of the channel (starting with ``#``)
+* ``uri``: A 'URI' specifying the IRC server and channel to connect to.  If you
+  specify a URI, there is no need to specify the below parameters, but if you
+  do specify any other parameters, they will override settings specified in the URI.
+  See `URI Format` below for more information.
+* ``channel`` (**REQUIRED IF NOT USING URI**): The name of the channel (starting with ``#``)
   to connect to on the IRC server.
-* ``limit_access_to`` (**REQUIRED**): A list of nicknames that are allowed
-  to interact with the debugger.
+* ``limit_access_to`` (**REQUIRED IF NOT USING URI**): A list of nicknames that
+  are allowed to interact with the debugger.  When specified in a URI, this should
+  be a comma-separated list of nicknames.
 * ``nickname``: The nickname to use when connecting. Note that an alternate
   name will be selected if this name is already in use. Defaults to using
   the hostname of the machine on which the debugger was executed.
@@ -91,6 +96,29 @@ Options
   if you happen to be connected to a server having very austere
   limits on the number of lines a client can send per minute.
   Default: ``10`` lines.
+
+Default Settings via Environment Variable
+-----------------------------------------
+
+You can specify default connection parameters by setting the ``DEFAULT_IRCPDB_URI``
+environment variable with a URI matching the format described below in `URI Format`.
+
+URI Format
+----------
+
+Example::
+
+    irc+ssl://botnickname@ircserverhostname:6667/#mychannel?limit_access_to=mynickname
+
+This is a shortcut format to use for specifying IRC connection parameters; roughly
+this follows the following format::
+
+    irc[+<ssl?>]://[[<nickname>][:<password>]@]<hostname>[:<port>]/<channel>
+
+All other parameters mentioned in `Options` above can be specified as query string arguments.
+
+Note that this diverges from a standard URI in that you should include the ``#``
+characters at the beginning of your channel name **unescaped**.
 
 Security Disclaimer
 -------------------
