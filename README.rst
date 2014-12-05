@@ -68,6 +68,11 @@ From ``pip``::
 Options
 -------
 
+You can either specify the server to connect to using a series of keyword
+arguments, or using a single URI string described below in `URI Format`.
+If you happen to specify connection parameters using both a URI and
+keyword arguments, the keyword arguments will take priority.
+
 * ``uri``: A 'URI' specifying the IRC server and channel to connect to.  If you
   specify a URI, there is no need to specify the below parameters, but if you
   do specify any other parameters, they will override settings specified in the URI.
