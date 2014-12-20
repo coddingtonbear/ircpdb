@@ -143,7 +143,14 @@ Within the template you'd like to add a debugger trace to, load the
 
 And, where you'd like to inject the ircpdb trace::
 
-    {% set_trace channel='#my_channel' limit_access_to=['coddingtonbear'] %}
+    {% set_trace channel='#my_channel' limit_access_to='coddingtonbear' %}
+
+.. note::
+
+   Although most parameters are unchanged between when invoking ``set_trace``
+   in python and invoking ``set_trace`` from within a template, the parameter
+   ``limit_access_to`` should be a comma-separated list of usernames rather
+   than a list literal when using ``set_trace`` in a template (like above).
 
 Next time you render this template (probably by going to a view that
 uses it), rendering will be halted at the point where you've placed your trace,
