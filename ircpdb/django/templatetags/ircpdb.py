@@ -17,3 +17,4 @@ def ircpdb_trace(context, *args, **kwargs):
             kwargs[name] = converter(kwargs[name])
 
     ircpdb.set_trace(*args, **kwargs)
+    return ''
