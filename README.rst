@@ -125,6 +125,37 @@ All other parameters mentioned in `Options` above can be specified as query stri
 Note that this diverges from a standard URI in that you should include the ``#``
 characters at the beginning of your channel name **unescaped**.
 
+Use in Django Templates
+-----------------------
+
+In your `settings.py`, add `ircpbd.django` to your installed apps::
+
+    INSTALLED_APPS = [
+        # Other apps
+        # ...
+        'ircpdb.django',
+    ]
+
+Within the template you'd like to add a debugger trace to, load the
+`ircpdb` template tags by adding the following to the top of the template::
+
+    {% load ircpdb %}
+
+And, where you'd like to inject the ircpdb trace::
+
+    {% set_trace channel='#my_channel' limit_access_to='coddingtonbear' %}
+
+.. note::
+
+   Although most parameters are unchanged between when invoking ``set_trace``
+   in python and invoking ``set_trace`` from within a template, the parameter
+   ``limit_access_to`` should be a comma-separated list of usernames rather
+   than a list literal when using ``set_trace`` in a template (like above).
+
+Next time you render this template (probably by going to a view that
+uses it), rendering will be halted at the point where you've placed your trace,
+and the ircpdb bot will appear in your channel.
+
 Security Disclaimer
 -------------------
 
