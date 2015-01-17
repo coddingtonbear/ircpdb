@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import os
 import sys
+import uuid
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
@@ -12,7 +13,10 @@ requirements_path = os.path.join(
 try:
     from pip.req import parse_requirements
     requirements = [
-        str(req.req) for req in parse_requirements(requirements_path)
+        str(req.req) for req in parse_requirements(
+            requirements_path,
+            session=uuid.uuid1()
+        )
     ]
 except ImportError:
     requirements = []
@@ -42,7 +46,7 @@ class Tox(TestCommand):
 
 setup(
     name="ircpdb",
-    version="1.6",
+    version="1.6.1",
     description=(
         "Remotely and collaboratively debug your Python application via IRC"
     ),
