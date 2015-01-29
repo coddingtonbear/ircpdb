@@ -59,6 +59,12 @@ class IrcpdbBot(SingleServerIRCBot):
             [
                 "Debugger ready (on host %s)" % socket.gethostname(),
                 (
+                    "The following users are able to interact with this "
+                    "debugger: %s" % (
+                        ', '.join(self.limit_access_to)
+                    )
+                ),
+                (
                     "Please prefix debugger commands with either '!' or "
                     "'%s:'. For pdb help, say '!help'; for a list of "
                     "ircpdb-specific commands, say '!!help'." % (

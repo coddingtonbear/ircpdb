@@ -46,7 +46,7 @@ class Tox(TestCommand):
 
 setup(
     name="ircpdb",
-    version="1.7",
+    version="1.7.1",
     description=(
         "Remotely and collaboratively debug your Python application via IRC"
     ),
