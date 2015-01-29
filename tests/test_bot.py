@@ -15,6 +15,7 @@ class TestBot(TestCase):
         self.arbitrary_limit_access_to = []
         self.arbitrary_message_wait_seconds = 0.8
         self.arbitrary_dpaste_minimum_response_length = 1000
+        self.arbitrary_activation_timeout = 60
         self.bot = IrcpdbBot(
             self.arbitrary_channel,
             self.arbitrary_nickname,
@@ -24,6 +25,7 @@ class TestBot(TestCase):
             self.arbitrary_limit_access_to,
             self.arbitrary_message_wait_seconds,
             self.arbitrary_dpaste_minimum_response_length,
+            self.arbitrary_activation_timeout
         )
 
     def test_does_not_allow_command_execution_if_not_in_limit_access_to(self):

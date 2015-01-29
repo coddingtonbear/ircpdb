@@ -24,6 +24,9 @@ class TestConfig(TestCase):
             'limit_access_to': ['a', 'b'],
 
             # Defaults
+            'activation_timeout': (
+                DEFAULT_PARAMS['activation_timeout']
+            ),
             'dpaste_minimum_response_length': (
                 DEFAULT_PARAMS['dpaste_minimum_response_length']
             ),
@@ -60,6 +63,9 @@ class TestConfig(TestCase):
             'server': 'ircserver.com',
 
             # Defaults
+            'activation_timeout': (
+                DEFAULT_PARAMS['activation_timeout']
+            ),
             'dpaste_minimum_response_length': (
                 DEFAULT_PARAMS['dpaste_minimum_response_length']
             ),
