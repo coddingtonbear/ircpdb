@@ -28,6 +28,7 @@ DEFAULT_PARAMS = {
     'limit_access_to': None,
     'message_wait_seconds': 0.8,
     'dpaste_minimum_response_length': 10,
+    'activation_timeout': 60
 }
 
 
@@ -103,6 +104,7 @@ class Ircpdb(pdb.Pdb):
             dpaste_minimum_response_length=(
                 params.get('dpaste_minimum_response_length')
             ),
+            activation_timeout=params.get('activation_timeout'),
             **connect_params
         )
 

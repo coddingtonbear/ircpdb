@@ -101,6 +101,9 @@ keyword arguments, the keyword arguments will take priority.
   if you happen to be connected to a server having very austere
   limits on the number of lines a client can send per minute.
   Default: ``10`` lines.
+* ``activation_timeout``: Wait maximally this number of seconds for
+  somebody to interact with the debugger in the channel before
+  disconnecting and continuing execution.  Default: ``60`` seconds.
 
 Default Settings via Environment Variable
 -----------------------------------------

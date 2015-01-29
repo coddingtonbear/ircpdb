@@ -25,14 +25,17 @@ class IrcpdbBot(SingleServerIRCBot):
         self, channel, nickname, server, port, password,
         limit_access_to, message_wait_seconds,
         dpaste_minimum_response_length,
+        activation_timeout,
         **connect_params
     ):
         self.channel = channel
         self.queue = Queue()
         self.joined = False
+        self.activated = False
         self.pre_join_queue = []
         self.message_wait_seconds = message_wait_seconds
         self.dpaste_minimum_response_length = dpaste_minimum_response_length
+        self.activation_timeout = activation_timeout
         self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
         super(IrcpdbBot, self).__init__(
@@ -97,6 +100,7 @@ class IrcpdbBot(SingleServerIRCBot):
         return
 
     def do_command(self, e, cmd):
+        self.activated = True
         logger.debug('Received command: %s', cmd)
         nickname = e.source.nick
         if nickname not in self.limit_access_to:
@@ -314,6 +318,13 @@ class IrcpdbBot(SingleServerIRCBot):
         self._connect()
         # Let's mark out inhandle as non-blocking
         fcntl.fcntl(inhandle, fcntl.F_SETFL, os.O_NONBLOCK)
+        # Used for keeping track of when the bot was started
+        # so we can disconnect for inactivity.
+        started = time.time()
+        # Keeps track of whether or not we're in the process of
+        # disconnecting (queued the 'q' command)
+        disconnecting = False
+
         while True:
             try:
                 messages = inhandle.read()
@@ -343,3 +354,20 @@ class IrcpdbBot(SingleServerIRCBot):
                 logger.debug('<< %s', message)
                 outhandle.write(u'%s\n' % message)
                 outhandle.flush()
+
+            if (
+                time.time() > started + self.activation_timeout
+                and not self.activated
+                and not disconnecting
+            ):
+                self.send_channel_message(
+                    [
+                        "No response received within %s seconds; "
+                        "disconnecting due to inactivity." % (
+                            self.activation_timeout
+                        )
+                    ],
+                    dpaste=False,
+                )
+                disconnecting = True
+                self.queue.put('c')

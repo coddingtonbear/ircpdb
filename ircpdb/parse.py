@@ -13,7 +13,8 @@ from .utils import comma_separated_list
 PARAMS = {
     'message_wait_seconds': float,
     'dpaste_minimum_response_length': int,
-    'limit_access_to': comma_separated_list
+    'limit_access_to': comma_separated_list,
+    'activation_timeout': float,
 }
 
 
