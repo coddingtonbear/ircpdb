@@ -345,7 +345,7 @@ class IrcpdbBot(SingleServerIRCBot):
                 self.send_prompt()
 
             try:
-                self.manifold.process_once(timeout)
+                self.reactor.process_once(timeout)
             except UnicodeDecodeError:
                 # This just *happens* -- I think these are coming from
                 # maybe MOTD messages?  It isn't clear.
