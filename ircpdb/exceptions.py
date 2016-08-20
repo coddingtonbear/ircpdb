@@ -11,5 +11,5 @@ class NoAllowedNicknamesSelected(IrcpdbError, ValueError):
     pass
 
 
-class DpasteError(IrcpdbError, IOError):
+class PasteError(IrcpdbError, IOError):
     pass

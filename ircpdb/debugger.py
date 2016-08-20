@@ -10,6 +10,7 @@ import traceback
 from irc.connection import Factory
 import six
 
+from . import paste_backends
 from .bot import IrcpdbBot
 from .exceptions import NoAllowedNicknamesSelected, NoChannelSelected
 from .parse import parse_irc_uri
@@ -27,7 +28,7 @@ DEFAULT_PARAMS = {
     'ssl': True,
     'limit_access_to': None,
     'message_wait_seconds': 0.8,
-    'dpaste_minimum_response_length': 10,
+    'paste_minimum_response_length': 10,
     'activation_timeout': 60
 }
 
@@ -93,6 +94,7 @@ class Ircpdb(pdb.Pdb):
             stdout=self.p_B_pipe,
         )
 
+        paste_backend = paste_backends.GistBackend()
         self.bot = IrcpdbBot(
             channel=params.get('channel'),
             nickname=params.get('nickname'),
@@ -101,9 +103,10 @@ class Ircpdb(pdb.Pdb):
             password=params.get('password'),
             limit_access_to=params.get('limit_access_to'),
             message_wait_seconds=params.get('message_wait_seconds'),
-            dpaste_minimum_response_length=(
-                params.get('dpaste_minimum_response_length')
+            paste_minimum_response_length=(
+                params.get('paste_minimum_response_length')
             ),
+            paste_backend=paste_backend,
             activation_timeout=params.get('activation_timeout'),
             **connect_params
         )

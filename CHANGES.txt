@@ -1,4 +1,23 @@
-1.5 (unreleased)
+1.8 (2016-08-19)
+================
+
+ - Switched to Gist instead of Dpaste.
+ - Added functionality allowing one to specify their own Paste backend.
+
+1.7 (2015-01-28)
+================
+
+ - Added 'activation_timeout' timer that defines a time limit for the first
+   interaction with the IRC channel before disconnecting and continuing
+   execution.
+
+1.6 (2014-12-20)
+================
+
+ - Adds a django template tag {% set_trace %}; this is usable for opening
+   up an ircpdb channel during template parsing.
+
+1.5 (2014-12-04)
 ================
 
  - Adds functionality for specifying configuration parameters via a single

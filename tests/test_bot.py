@@ -14,7 +14,7 @@ class TestBot(TestCase):
         self.arbitrary_password = '1qaz2wsx'
         self.arbitrary_limit_access_to = []
         self.arbitrary_message_wait_seconds = 0.8
-        self.arbitrary_dpaste_minimum_response_length = 1000
+        self.arbitrary_paste_minimum_response_length = 1000
         self.arbitrary_activation_timeout = 60
         self.bot = IrcpdbBot(
             self.arbitrary_channel,
@@ -24,7 +24,7 @@ class TestBot(TestCase):
             self.arbitrary_password,
             self.arbitrary_limit_access_to,
             self.arbitrary_message_wait_seconds,
-            self.arbitrary_dpaste_minimum_response_length,
+            self.arbitrary_paste_minimum_response_length,
             self.arbitrary_activation_timeout
         )
 

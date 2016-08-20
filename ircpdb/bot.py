@@ -9,10 +9,9 @@ import time
 
 from irc import strings
 from irc.bot import SingleServerIRCBot, ServerSpec
-import requests
 import six
 
-from .exceptions import DpasteError
+from .exceptions import PasteError
 
 
 logger = logging.getLogger(__name__)
@@ -24,8 +23,9 @@ class IrcpdbBot(SingleServerIRCBot):
     def __init__(
         self, channel, nickname, server, port, password,
         limit_access_to, message_wait_seconds,
-        dpaste_minimum_response_length,
+        paste_minimum_response_length,
         activation_timeout,
+        paste_backend=None,
         **connect_params
     ):
         self.channel = channel
@@ -34,7 +34,8 @@ class IrcpdbBot(SingleServerIRCBot):
         self.activated = False
         self.pre_join_queue = []
         self.message_wait_seconds = message_wait_seconds
-        self.dpaste_minimum_response_length = dpaste_minimum_response_length
+        self.paste_minimum_response_length = paste_minimum_response_length
+        self.paste_backend = paste_backend
         self.activation_timeout = activation_timeout
         self.limit_access_to = limit_access_to
         server = ServerSpec(server, port, password)
@@ -72,7 +73,7 @@ class IrcpdbBot(SingleServerIRCBot):
                     )
                 )
             ],
-            dpaste=False
+            paste=False
         )
         for username, message in self.pre_join_queue:
             self.send_user_message(username, message)
@@ -93,8 +94,8 @@ class IrcpdbBot(SingleServerIRCBot):
         # Check if this message is prefixed with the bot's username:
         a = e.arguments[0].split(":", 1)
         if (
-            len(a) > 1
-            and strings.lower(a[0]) == strings.lower(
+            len(a) > 1 and
+            strings.lower(a[0]) == strings.lower(
                 self.connection.get_nickname()
             )
         ):
@@ -157,20 +158,20 @@ class IrcpdbBot(SingleServerIRCBot):
                 )
                 self.queue.put('continue')
 
-        elif cmd.startswith("!set_dpaste_minimum_response_length"):
+        elif cmd.startswith("!set_paste_minimum_response_length"):
             value = cmd.split(' ')
             try:
-                self.dpaste_minimum_response_length = int(value[1])
+                self.paste_minimum_response_length = int(value[1])
                 self.send_channel_message(
                     "Messages longer than %s lines will now be posted "
-                    "to dpaste if possible." % (
-                        self.dpaste_minimum_response_length
+                    "to paste if possible." % (
+                        self.paste_minimum_response_length
                     )
                 )
             except (TypeError, IndexError, ValueError):
                 self.send_channel_message(
                     "An error was encountered while setting the "
-                    "dpaste_minimum_response_length setting. %s"
+                    "paste_minimum_response_length setting. %s"
                 )
         elif cmd.startswith("!set_message_wait_seconds"):
             value = cmd.split(' ')
@@ -198,10 +199,10 @@ class IrcpdbBot(SingleServerIRCBot):
                   Remove NICKNAME from the list of users that are allowed
                   to interact with the debugger.
 
-                * !!set_dpaste_minimum_response_length INTEGER
+                * !!set_paste_minimum_response_length INTEGER
                   Try to send messages this length or longer in lines
-                  to dpaste rather than sending them to IRC directly.
-                  Current value: {dpaste_minimum_response_length}.
+                  to paste rather than sending them to IRC directly.
+                  Current value: {paste_minimum_response_length}.
 
                 * !!set_message_wait_seconds FLOAT
                   Set the number of seconds to wait between sending messages
@@ -211,26 +212,26 @@ class IrcpdbBot(SingleServerIRCBot):
                   time. Current value: {message_wait_seconds}.
             """.format(
                 limit_access_to=self.limit_access_to,
-                dpaste_minimum_response_length=(
-                    self.dpaste_minimum_response_length
+                paste_minimum_response_length=(
+                    self.paste_minimum_response_length
                 ),
                 message_wait_seconds=self.message_wait_seconds,
             ))
             self.send_channel_message(
                 available_commands,
-                dpaste=True,
+                paste=True,
             )
         else:
             self.queue.put(cmd.strip())
 
-    def send_channel_message(self, message, dpaste=None):
+    def send_channel_message(self, message, paste=None):
         return self.send_user_message(
             self.channel,
             message,
-            dpaste=dpaste,
+            paste=paste,
         )
 
-    def send_user_message(self, username, message, dpaste=None):
+    def send_user_message(self, username, message, paste=None):
         if not self.joined:
             logger.warning(
                 'Tried to send message %s, '
@@ -249,17 +250,17 @@ class IrcpdbBot(SingleServerIRCBot):
             lines = message
         chunked = self.get_chunked_lines(lines)
         try:
-            long_response = len(chunked) >= self.dpaste_minimum_response_length
-            if (long_response and dpaste is None) or dpaste is True:
-                dpaste_url = self.send_lines_to_dpaste(lines)
+            long_response = len(chunked) >= self.paste_minimum_response_length
+            if (long_response and paste is None) or paste is True:
+                paste_url = self.send_lines_to_paste(lines)
                 self.send_lines(
                     username, "See %s (%s lines in result)" % (
-                        dpaste_url,
+                        paste_url,
                         len(lines)
                     )
                 )
                 return
-        except DpasteError:
+        except pasteError:
             pass
         self.send_lines(username, chunked)
 
@@ -286,17 +287,11 @@ class IrcpdbBot(SingleServerIRCBot):
                 chunked_lines.append(line)
         return chunked_lines
 
-    def send_lines_to_dpaste(self, lines):
+    def send_lines_to_paste(self, lines):
         try:
-            response = requests.post(
-                'http://dpaste.com/api/v2/',
-                data={
-                    'content': '\n'.join(lines)
-                }
-            )
-            return response.url
+            return self.paste_backend.paste(lines)
         except Exception as e:
-            raise DpasteError(str(e))
+            raise PasteError(str(e))
 
     def send_lines(self, target, lines, command=None):
         prefix = ':'
@@ -362,9 +357,9 @@ class IrcpdbBot(SingleServerIRCBot):
                 outhandle.flush()
 
             if (
-                time.time() > started + self.activation_timeout
-                and not self.activated
-                and not disconnecting
+                time.time() > started + self.activation_timeout and
+                not self.activated and
+                not disconnecting
             ):
                 self.send_channel_message(
                     [
@@ -373,7 +368,7 @@ class IrcpdbBot(SingleServerIRCBot):
                             self.activation_timeout
                         )
                     ],
-                    dpaste=False,
+                    paste=False,
                 )
                 disconnecting = True
                 self.queue.put('c')
