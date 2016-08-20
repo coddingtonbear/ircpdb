@@ -28,7 +28,7 @@ DEFAULT_PARAMS = {
     'ssl': True,
     'limit_access_to': None,
     'message_wait_seconds': 0.8,
-    'paste_minimum_response_length': 10,
+    'paste_minimum_response_length': 20,
     'activation_timeout': 60
 }
 

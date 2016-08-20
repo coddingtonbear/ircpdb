@@ -260,7 +260,7 @@ class IrcpdbBot(SingleServerIRCBot):
                     )
                 )
                 return
-        except pasteError:
+        except PasteError:
             pass
         self.send_lines(username, chunked)
 
