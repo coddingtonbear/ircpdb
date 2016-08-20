@@ -92,12 +92,12 @@ keyword arguments, the keyword arguments will take priority.
   wait between sending messages on IRC.  Many servers, including Freenode,
   will kick clients that send too many messages in too short of a time
   frame.  Default: ``0.8`` seconds.
-* ``dpaste_minimum_response_length``: Try to post messages this length
-  or longer to `dpaste <http://dpaste.com/>`_ rather than sending
+* ``paste_minimum_response_length``: Try to post messages this length
+  or longer to a `gist <http://gist.github.com/>`_ rather than sending
   each line individually via IRC.  This is a useful parameter to use
   if you happen to be connected to a server having very austere
   limits on the number of lines a client can send per minute.
-  Default: ``10`` lines.
+  Default: ``20`` lines.
 * ``activation_timeout``: Wait maximally this number of seconds for
   somebody to interact with the debugger in the channel before
   disconnecting and continuing execution.  Default: ``60`` seconds.
